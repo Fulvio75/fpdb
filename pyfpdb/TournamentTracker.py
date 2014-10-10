@@ -36,8 +36,7 @@ import traceback
 (options, argv) = Options.fpdb_options()
 
 if not options.errorsToConsole:
-    print (_("Note: error output is being diverted to %s.") % "tourneyerror.txt"),
-             _("Any major error will be reported there _only_.")
+    print (_("Note: error output is being diverted to %s.") % "tourneyerror.txt"),  _("Any major error will be reported there _only_.")
     errorFile = open('tourneyerror.txt', 'w', 0)
     sys.stderr = errorFile
 
