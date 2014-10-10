@@ -105,7 +105,7 @@ class GuiTourneyPlayerStats:
         self.main_hbox.show()
     #end def __init__
 
-    def addGrid(self, vbox, query, numTourneys, tourneyTypes, playerids, sitenos, seats):
+    def addGrid(self, vbox, queryName, numTourneys, tourneyTypes, playerids, sitenos, seats):
         #print "start of addGrid query", query
         #print "start of addGrid. numTourneys:",numTourneys,"tourneyTypes:", tourneyTypes, "playerids:",playerids
         counter = 0
@@ -113,10 +113,20 @@ class GuiTourneyPlayerStats:
         sqlrow = 0
         grid=numTourneys #TODO: should this be numTourneyTypes?
         
-        query = self.sql.query[query]
-        query = self.refineQuery(query, numTourneys, tourneyTypes, playerids, sitenos, seats)
+        query = self.sql.query[queryName]
+        #query = self.refineQuery(query, numTourneys, tourneyTypes, sitenos, seats)
         #print "DEBUG:\n%s" % query
-        self.cursor.execute(query)
+
+        #Filter on dates
+        start_date, end_date = self.filters.getDates()
+        
+        namedSqlParameters = {
+            'players': playerids, 
+            'sites': sitenos, 
+            'startdate': start_date, 
+            'enddate': end_date }
+
+        self.cursor.execute(query, namedSqlParameters)
         result = self.cursor.fetchall()
         #print "result of the big query in addGrid:",result
         colnames = [desc[0] for desc in self.cursor.description]
@@ -254,16 +264,10 @@ class GuiTourneyPlayerStats:
         return self.main_hbox
     #end def get_vbox
     
-    def refineQuery(self, query, numTourneys, tourneyTypes, playerids, sitenos, seats):
+    def refineQuery(self, query, numTourneys, tourneyTypes, sitenos, seats):
         having = ''
         
-        #print "start of refinequery, playerids:",playerids
-        if playerids:
-            nametest = str(tuple(playerids))
-            nametest = nametest.replace("L", "")
-            nametest = nametest.replace(",)",")")
-        else:
-            nametest = "1 = 2"
+        
         #print "refinequery, nametest after initial creation:",nametest
         pname = "p.name"
         # set flag in self.columns to not show player name column

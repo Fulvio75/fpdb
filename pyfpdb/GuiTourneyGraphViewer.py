@@ -214,26 +214,14 @@ class GuiTourneyGraphViewer:
     #end of def showClicked
 
     def getData(self, names, sites):
-        tmp = self.sql.query['tourneyGraph']
         #print "DEBUG: getData"
         start_date, end_date = self.filters.getDates()
-
-        #Buggered if I can find a way to do this 'nicely' take a list of integers and longs
-        # and turn it into a tuple readale by sql.
-        # [5L] into (5) not (5,) and [5L, 2829L] into (5, 2829)
-        nametest = str(tuple(names))
-        sitetest = str(tuple(sites))
-
-        #Must be a nicer way to deal with tuples of size 1 ie. (2,) - which makes sql barf
-        tmp = tmp.replace("<player_test>", nametest)
-        tmp = tmp.replace("<site_test>", sitetest)
-        tmp = tmp.replace("<startdate_test>", start_date)
-        tmp = tmp.replace("<enddate_test>", end_date)
-        tmp = tmp.replace(",)", ")")
-
-        #print "DEBUG: sql query:", tmp
-
-        self.db.cursor.execute(tmp)
+        namedSqlParameters = {
+            'players': names, 
+            'sites': sites, 
+            'startdate': start_date, 
+            'enddate': end_date }
+        self.db.cursor.execute(self.sql.query['tourneyGraph'], namedSqlParameters)
         #returns (HandId,Winnings,Costs,Profit)
         winnings = self.db.cursor.fetchall()
         self.db.rollback()
