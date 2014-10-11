@@ -2095,7 +2095,7 @@ class Sql:
         
         #FIXME: 3/4bet and foldTo don't added four tournaments yet
         self.query['tourneyPlayerDetailedStats'] = """
-                      select 
+                      SELECT 
                             s.name AS "siteName",
                             t.tourneyTypeId AS "tourneyTypeId",
                             tt.currency AS "currency",
@@ -2107,6 +2107,8 @@ class Sql:
                             tt.category AS "category",
                             tt.limitType AS "limitType",
                             tt.speed AS "speed",
+                            tt.maxseats AS "maxseats",
+                            tt.kobounty AS "kobounty",
                             p.name AS "playerName",
                             COUNT(1) AS "tourneyCount",
                             SUM(CASE 
@@ -2130,7 +2132,7 @@ class Sql:
                                     WHEN tp.rank = 3 THEN 1 
                                     ELSE 0 
                                 END)  AS "_3rd",
-                            SUM(tp.winnings)/100.0 AS "won",
+                            COALESCE(SUM(tp.winnings), 0)/100.0 AS "won",
                             SUM(CASE
                                     WHEN tt.currency = 'play' THEN tt.buyIn
                                     ELSE (tt.buyIn+tt.fee)/100.0
@@ -2163,7 +2165,9 @@ class Sql:
                             tt.fee, 
                             tt.category, 
                             tt.limitType, 
-                            tt.speed
+                            tt.speed,
+                            tt.maxseats,
+                            tt.kobounty
                         ORDER BY 
                             t.tourneyTypeId,
                             p.name,
