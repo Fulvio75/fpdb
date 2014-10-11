@@ -70,26 +70,27 @@ class GuiTourneyPlayerStats:
         # ToDo: store in config
         # ToDo: create popup to adjust column config
         # columns to display, keys match column name returned by sql, values in tuple are:
-        #     is column displayed, column heading, column tooltip, xalignment, formatting, celltype
-        self.columns = [ ["siteName",       True,  _("Site"),       _("Site"),    0.0, "%s", "str"]
-                       #,["tourney",        False, _("Tourney"),    _("Site"),    0.0, "%s", "str"]   # true not allowed for this line
-                       , ["category",       True,  _("Cat."),       _("Game Type"),    0.0, "%s", "str"]
+        #                   is column displayed, column heading, column tooltip, xalignment, formatting, celltype
+        self.columns = [ ["siteName",       True,  _("Site"),       _("Site"),          0.0, "%s", "str"]
+                       #,["tourney",        False, _("Tourney"),    _("Site"),          0.0, "%s", "str"]   # true not allowed for this line
+                       , ["category",       True,  _("Cat."),       _("Game Type"),     0.0, "%s", "str"]
                        , ["limitType",      True,  _("Limit"),      _("Limit Type"),    0.0, "%s", "str"]
-                       , ["currency",       True,  _("Curr."),      _("Currency"),    0.0, "%s", "str"]
-                       , ["buyIn",          True,  _("BuyIn"),      _("Buy in"),    1.0, "%3.2f", "str"]
-                       , ["fee",            True,  _("Fee"),        _("Site rake"),    1.0, "%3.2f", "str"]
-                       , ["maxseats",       True,  _("Seats"),      _("Max seats"),    1.0, "%1.0f", "str"]
-                       , ["kobounty",       True,  _("KoBounty"),   _("KO bounty"),    1.0, "%1.0f", "str"]
-                       , ["playerName",     False, _("Name"),       _("Player name"),    0.0, "%s", "str"]   # true not allowed for this line (set in code)
-                       , ["tourneyCount",   True,  _("#"),          _("# of tourneys"),    1.0, "%1.0f", "str"]
-                       , ["itm",            True,  _("ITM%"),       _("% in the money"),    1.0, "%3.2f", "str"]
-                       , ["_1st",           False, _("1st"),        _("# of 1st place"),    1.0, "%1.0f", "str"]
-                       , ["_2nd",           True,  _("2nd"),        _("# of 2nd place"),    1.0, "%1.0f", "str"]
-                       , ["_3rd",           True,  _("3rd"),        _("# of 3rd place"),    1.0, "%1.0f", "str"]
-                       , ["unknownRank",    True,  _("Rank?"),      _("To understand..."),    1.0, "%1.0f", "str"]
-                       , ["spent",          True,  _("Spent"),      _("Invested money"),    1.0, "%3.2f", "str"]
-                       , ["won",            True,  _("Won"),        _("Won money"),    1.0, "%3.2f", "str"]
-                       , ["roi",            True,  _("ROI%"),       _("Return on investment % (won-spent)/spent"),    1.0, "%3.2f", "str"]
+                       , ["currency",       True,  _("Curr."),      _("Currency"),      0.0, "%s", "str"]
+                       , ["totalBuyIn",     True,  _("BuyIn"),      _("Total buy in"),  1.0, "%3.2f", "str"]
+                       , ["fee",            True,  _("Fee"),        _("Rake"),          1.0, "%3.2f", "str"]
+                       , ["maxseats",       True,  _("Seats"),      _("Max seats"),     1.0, "%1.0f", "str"]
+                       , ["kobounty",       True,  _("KoBounty"),   _("KO bounty"),     1.0, "%1.0f", "str"]
+                       , ["playerName",     False, _("Name"),       _("Player name"),   0.0, "%s", "str"]   # true not allowed for this line (set in code)
+                       , ["tourneyCount",   True,  _("#"),          _("# of tourneys"), 1.0, "%1.0f", "str"]
+                       , ["itm",            True,  _("ITM%"),       _("% in the money"),1.0, "%3.2f", "str"]
+                       , ["_1st",           False, _("1st"),        _("# of 1st place"),1.0, "%1.0f", "str"]
+                       , ["_2nd",           True,  _("2nd"),        _("# of 2nd place"),1.0, "%1.0f", "str"]
+                       , ["_3rd",           True,  _("3rd"),        _("# of 3rd place"),1.0, "%1.0f", "str"]
+                       , ["unknownRank",    True,  _("Rank?"),      _("To understand."),1.0, "%1.0f", "str"]
+                       , ["spent",          True,  _("Spent"),      _("Invested money"),1.0, "%3.2f", "str"]
+                       , ["won",            True,  _("Winnings"),   _("Total winnings"),1.0, "%3.2f", "str"]
+                       , ["netWinnings",    True,  _("NetWin"),     _("Net winnings"),  1.0, "%3.2f", "str"]
+                       , ["roi",            True,  _("ROI%"),       _("Return on investment %"),    1.0, "%3.2f", "str"]
                        , ["profitPerTourney", True,_("$/Tour"),     _("Profit per tourney"),    1.0, "%3.2f", "str"]]
                        
         self.stats_frame = gtk.Frame()

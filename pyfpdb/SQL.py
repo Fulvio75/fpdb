@@ -2101,8 +2101,8 @@ class Sql:
                             tt.currency AS "currency",
                             CASE
                                 WHEN tt.currency = 'play' THEN tt.buyIn
-                                ELSE tt.buyIn/100.0
-                            END AS "buyIn",
+                                ELSE (tt.buyIn + tt.fee)/100.0
+                            END AS "totalBuyIn",
                             tt.fee/100.0 AS "fee",
                             tt.category AS "category",
                             tt.limitType AS "limitType",
@@ -2133,6 +2133,7 @@ class Sql:
                                     ELSE 0 
                                 END)  AS "_3rd",
                             COALESCE(SUM(tp.winnings), 0)/100.0 AS "won",
+                            SUM(tp.winnings-(tt.buyin+tt.fee))/100.0 AS "netWinnings",
                             SUM(CASE
                                     WHEN tt.currency = 'play' THEN tt.buyIn
                                     ELSE (tt.buyIn+tt.fee)/100.0
