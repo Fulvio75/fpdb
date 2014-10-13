@@ -202,20 +202,21 @@ class GuiTourneyPlayerStats:
             for col,column in enumerate(self.cols_to_show):
                 if column[colalias] in colnames:
                     value = result[sqlrow][colnames.index(column[colalias])]
+                
+                    if column[colalias] == 'siteName':
+                        if result[sqlrow][colnames.index('speed')] != 'Normal':
+                            if (result[sqlrow][colnames.index('speed')] == 'Hyper' 
+                                and result[sqlrow][colnames.index('siteName')] ==
+                                'Full Tilt Poker'):
+                                value = value + ' ' + 'Super Turbo'
+                            else:
+                                value = value + ' ' + result[sqlrow][colnames.index('speed')]
+                    if value != None and value != -999:
+                        treerow.append(column[colformat] % value)
+                    else:
+                        treerow.append(' ')
                 else:
-                    value = 111
-                if column[colalias] == 'siteName':
-                    if result[sqlrow][colnames.index('speed')] != 'Normal':
-                        if (result[sqlrow][colnames.index('speed')] == 'Hyper' 
-                            and result[sqlrow][colnames.index('siteName')] ==
-                            'Full Tilt Poker'):
-                            value = value + ' ' + 'Super Turbo'
-                        else:
-                            value = value + ' ' + result[sqlrow][colnames.index('speed')]
-                if value != None and value != -999:
-                    treerow.append(column[colformat] % value)
-                else:
-                    treerow.append(' ')
+                    treerow.append('Column alias not found in query')
             #print "addGrid, just before end of big for. grid:",grid,"treerow:",treerow
             iter = self.liststore[grid].append(treerow)
             sqlrow += 1
