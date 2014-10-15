@@ -315,14 +315,15 @@ class Importer:
 
     def _import_despatch(self, fpdbfile):
         stored, duplicates, partial, errors, ttime = 0,0,0,0,0
-        if fpdbfile.ftype in ("hh", "both"):
+        ftype = fpdbfile.ftype
+        if ftype in ("hh", "both"):
             (stored, duplicates, partial, errors, ttime) = self._import_hh_file(fpdbfile)
-        if fpdbfile.ftype == "summary":
+        if ftype == "summary":
             (stored, duplicates, partial, errors, ttime) = self._import_summary_file(fpdbfile)
-        if fpdbfile.ftype == "both" and fpdbfile.path not in self.updatedsize:
+        if ftype == "both" and fpdbfile.path not in self.updatedsize:
             self._import_summary_file(fpdbfile)
         #    pass
-        print "DEBUG: _import_summary_file.ttime: %.3f %s" % (ttime, fpdbfile.ftype)
+        print "DEBUG: _import_summary_file.ttime: %.3f %s" % (ttime, ftype)
         return (stored, duplicates, partial, errors, ttime)
 
 

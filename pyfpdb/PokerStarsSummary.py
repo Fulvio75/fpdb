@@ -152,14 +152,14 @@ class PokerStarsSummary(TourneySummary):
     codepage = ["utf8", "cp1252"]
 
     @staticmethod
-    def getSplitRe(self, head):
+    def getSplitRe(head):
         re_SplitTourneys = re.compile("PokerStars Tournament ")
         re_HTMLSplitTourneys = re.compile("tr id=\"row_\d+")
         m = re.search("<title>TOURNEYS:", head)
         if m != None:
             self.hhtype = "html"
             return re_HTMLSplitTourneys
-        self.hhtype = "summary"
+        #self.hhtype = "summary"
         return re_SplitTourneys
 
     def parseSummary(self):

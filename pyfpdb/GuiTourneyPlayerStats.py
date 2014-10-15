@@ -46,7 +46,7 @@ class GuiTourneyPlayerStats:
                             #"Limits"    : True,
                             #"LimitSep"  : True,
                             #"LimitType" : True,
-                            #"Type"      : True,
+                            "Type"      : True,
                             "Seats"     : True,
                             #"SeatSep"   : True,
                             "Dates"     : True,
@@ -197,21 +197,25 @@ class GuiTourneyPlayerStats:
 
         rows = len(result) # +1 for title row
 
+        speedIndexColumn = colnames.index('speed');
+        siteNameIndexColumn = colnames.index('siteName');
+
         while sqlrow < rows:
             treerow = []
-            for col,column in enumerate(self.cols_to_show):
+            currentSqlRow = result[sqlrow]; 
+            for column in self.cols_to_show:
                 if column[colalias] in colnames:
-                    value = result[sqlrow][colnames.index(column[colalias])]
+                    value = currentSqlRow[colnames.index(column[colalias])]
                 
                     if column[colalias] == 'siteName':
-                        if result[sqlrow][colnames.index('speed')] != 'Normal':
-                            if (result[sqlrow][colnames.index('speed')] == 'Hyper' 
-                                and result[sqlrow][colnames.index('siteName')] ==
+                        if currentSqlRow[speedIndexColumn] != 'Normal':
+                            if (currentSqlRow[speedIndexColumn] == 'Hyper' 
+                                and currentSqlRow[siteNameIndexColumn] ==
                                 'Full Tilt Poker'):
                                 value = value + ' ' + 'Super Turbo'
                             else:
-                                value = value + ' ' + result[sqlrow][colnames.index('speed')]
-                    if value != None and value != -999:
+                                value = value + ' ' + currentSqlRow[speedIndexColumn]
+                    if value != None:
                         treerow.append(column[colformat] % value)
                     else:
                         treerow.append(' ')

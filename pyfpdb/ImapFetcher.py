@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#Copyright 2010-2011 Steffen Schaumburg
+# Copyright 2010-2011 Steffen Schaumburg
 #This program is free software: you can redistribute it and/or modify
 #it under the terms of the GNU Affero General Public License as published by
 #the Free Software Foundation, version 3 of the License.
@@ -20,12 +20,17 @@
 #see http://tools.ietf.org/html/rfc2060#section-6.4.4 for IMAP4 search criteria
 
 import L10n
+
 _ = L10n.get_translation()
 
 from imaplib import IMAP4, IMAP4_SSL
 import sys
 import codecs
 import re
+import string
+import quopri
+from pyparsing import (nestedExpr, Literal, Word, alphanums,
+    quotedString, replaceWith, nums, removeQuotes)
 
 import Configuration
 import Database
@@ -36,8 +41,8 @@ import PokerStarsSummary
 import FullTiltPokerSummary
 
 
-def splitPokerStarsSummaries(summaryText): #TODO: this needs to go to PSS.py
-    re_SplitTourneys = PokerStarsSummary.PokerStarsSummary.re_SplitTourneys
+def splitPokerStarsSummaries(summaryText):  #TODO: this needs to go to PSS.py
+    re_SplitTourneys = PokerStarsSummary.PokerStarsSummary.getSplitRe(summaryText)
     splitSummaries = re.split(re_SplitTourneys, summaryText)
 
     if len(splitSummaries) <= 1:
@@ -45,7 +50,8 @@ def splitPokerStarsSummaries(summaryText): #TODO: this needs to go to PSS.py
 
     return splitSummaries
 
-def splitFullTiltSummaries(summaryText):#TODO: this needs to go to FTPS.py
+
+def splitFullTiltSummaries(summaryText):  #TODO: this needs to go to FTPS.py
     re_SplitTourneys = FullTiltPokerSummary.FullTiltPokerSummary.re_SplitTourneys
     splitSummaries = re.split(re_SplitTourneys, summaryText)
 
@@ -54,61 +60,81 @@ def splitFullTiltSummaries(summaryText):#TODO: this needs to go to FTPS.py
 
     return splitSummaries
 
+
 def run(config, db):
-        #print "start of IS.run"
-        server=None
+    #print "start of IS.run"
     #try:
-        #print "useSSL",config.useSsl,"host",config.host
-        if config.useSsl:
-            server = IMAP4_SSL(config.host)
-        else:
-            server = IMAP4(config.host)
-        response = server.login(config.username, config.password) #TODO catch authentication error
-        #print(_("response to logging in: "), response)
-        #print "server.list():",server.list() #prints list of folders
+    #print "useSSL",config.useSsl,"host",config.host
+    if config.useSsl:
+        server = IMAP4_SSL(config.host)
+    else:
+        server = IMAP4(config.host)
+    response = server.login(config.username, config.password)  #TODO catch authentication error
+    #print(_("response to logging in: "), response)
+    #print "server.list():",server.list() #prints list of folders
 
-        response = server.select(config.folder)
-        #print "response to selecting INBOX:",response
-        if response[0]!="OK":
-            raise error #TODO: show error message
+    response = server.select(config.folder)
+    #print "response to selecting INBOX:",response
+    if response[0] != "OK":
+        raise error  #TODO: show error message
 
-        neededMessages=[]
-        response, searchData = server.search(None, "SUBJECT", "PokerStars Tournament History Request")
-        for messageNumber in searchData[0].split(" "):
-            response, headerData = server.fetch(messageNumber, "(BODY[HEADER.FIELDS (SUBJECT)])")
-            if response!="OK":
-                raise error #TODO: show error message
-            neededMessages.append(("PS", messageNumber))
+    neededMessages = []
+    response, searchData = server.search(None, "SUBJECT", "PokerStars Tournament History Request")
+    for messageNumber in searchData[0].split(" "):
+        response, headerData = server.fetch(messageNumber, "(BODY[HEADER.FIELDS (SUBJECT)])")
+        if response != "OK":
+            raise error  #TODO: show error message
+        neededMessages.append(("PS", messageNumber))
 
-        print _("Found %s eMails to fetch") %(len(neededMessages))
+    print _("Found %s eMails to fetch") % (len(neededMessages))
 
-        if (len(neededMessages)==0):
-            raise error #TODO: show error message
+    if (len(neededMessages) == 0):
+        raise error  #TODO: show error message
 
-        email_bodies = []
-        for i, messageData in enumerate(neededMessages, start=1):
-            #print("Retrieving message %s" % i)
-            response, bodyData = server.fetch(messageData[1], "(UID BODY[TEXT])")
-            bodyData=bodyData[0][1]
-            if response!="OK":
-                raise error #TODO: show error message
-            if messageData[0]=="PS":
-                email_bodies.append(bodyData)
-    #finally:
-     #   try:
-        server.close()
-       # finally:
-        #    pass
-        server.logout()
-        print _("Finished downloading emails.")
 
-        errors = 0
-        if len(email_bodies) > 0:
-            errors = importSummaries(db, config, email_bodies, options = None)
-        else:
-            print _("No Tournament summaries found.")
+    NIL = Literal("NIL").setParseAction(replaceWith(None))
+    integer = Word(nums).setParseAction(lambda t: int(t[0]))
+    quotedString.setParseAction(removeQuotes)
+    content = (NIL | integer | Word(alphanums))
 
-        print(_("Errors:"), errors)
+    email_bodies = []
+    for i, messageData in enumerate(neededMessages, start=1):
+        #print("Retrieving message %s" % i)
+
+        # Obtain BODYSTRUCTURE call
+        email_uid = messageData[1]
+        response, bodystructure = server.fetch(email_uid, '(BODYSTRUCTURE)')
+        if response != "OK":
+            raise error  #TODO: show error message
+
+        response, bodyData = server.fetch(email_uid, "(UID BODY[TEXT])")
+        if response != "OK":
+            raise error  #TODO: show error message
+        if messageData[0] == "PS":
+            splitted_bodystructure = string.split(str(bodystructure[0]), " ", 1)
+            parsed_bodystructure = nestedExpr(content=content, ignoreExpr=quotedString).parseString(splitted_bodystructure[1])
+            charset = parsed_bodystructure[0][1][2][1]
+            content_transfer_encoding = parsed_bodystructure[0][1][5]
+            if content_transfer_encoding == 'QUOTED-PRINTABLE':
+                decoded_body = quopri.decodestring(bodyData[0][1]).decode(charset)
+            else:
+                decoded_body = bodyData[0][1].decode(charset)
+            email_bodies.append(decoded_body)
+            #finally:
+            #   try:
+    server.close()
+    # finally:
+    #    pass
+    server.logout()
+    print _("Finished downloading emails.")
+
+    errors = 0
+    if len(email_bodies) > 0:
+        errors = importSummaries(db, config, email_bodies, options=None)
+    else:
+        print _("No Tournament summaries found.")
+
+    print(_("Errors:"), errors)
 
 def readFile(filename, options):
     codepage = ["utf8"]
@@ -126,15 +152,17 @@ def readFile(filename, options):
             in_fh.close()
             break
         except:
-           pass
+            pass
 
     return whole_file
 
+
 def runFake(db, config, options):
     summaryText = readFile(options.filename, options)
-    importSummaries(db, config,[summaryText], options=options)
+    importSummaries(db, config, [summaryText], options=options)
 
-def importSummaries(db, config, summaries, options = None):
+
+def importSummaries(db, config, summaries, options=None):
     # TODO: At this point we should have:
     # - list of strings to process
     # - The sitename OR specialised TourneySummary object
@@ -143,20 +171,22 @@ def importSummaries(db, config, summaries, options = None):
     for summaryText in summaries:
         # And we should def be using a 'Split' from the site object
         if options == None or options.hhc == "PokerStars":
-            summaryTexts=(splitPokerStarsSummaries(summaryText))
+            summaryTexts = (splitPokerStarsSummaries(summaryText))
         elif options.hhc == "Full Tilt Poker":
-            summaryTexts=(splitFullTiltSummaries(summaryText))
+            summaryTexts = (splitFullTiltSummaries(summaryText))
 
-        print "Found %s summaries in email" %(len(summaryTexts))
+        print "Found %s summaries in email" % (len(summaryTexts))
         for j, summaryText in enumerate(summaryTexts, start=1):
             try:
                 if options == None or options.hhc == "PokerStars":
-                    PokerStarsSummary.PokerStarsSummary(db=db, config=config, siteName=u"PokerStars", summaryText=summaryText, builtFrom = "IMAP")
+                    PokerStarsSummary.PokerStarsSummary(db=db, config=config, siteName=u"PokerStars",
+                                                        summaryText=summaryText, builtFrom="IMAP")
                 elif options.hhc == "Full Tilt Poker":
-                    FullTiltPokerSummary.FullTiltPokerSummary(db=db, config=config, siteName=u"Fulltilt", summaryText=summaryText, builtFrom = "IMAP")
+                    FullTiltPokerSummary.FullTiltPokerSummary(db=db, config=config, siteName=u"Fulltilt",
+                                                              summaryText=summaryText, builtFrom="IMAP")
             except FpdbParseError, e:
                 errors += 1
-            print _("Finished importing %s/%s tournament summaries") %(j, len(summaryTexts))
+            print _("Finished importing %s/%s tournament summaries") % (j, len(summaryTexts))
 
     return errors
 
@@ -180,7 +210,7 @@ def main(argv=None):
     # These options should really come from the OptionsParser
     config = Configuration.Config()
     db = Database.Database(config)
-    sql = SQL.Sql(db_server = 'sqlite')
+    sql = SQL.Sql(db_server='sqlite')
     settings = {}
     settings.update(config.get_db_parameters())
     settings.update(config.get_import_parameters())
@@ -188,6 +218,7 @@ def main(argv=None):
     db.recreate_tables()
 
     runFake(db, config, options)
+
 
 if __name__ == '__main__':
     sys.exit(main())
