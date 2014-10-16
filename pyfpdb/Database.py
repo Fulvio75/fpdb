@@ -698,6 +698,7 @@ class Database:
         try:
             self.connect(backend=db['db-backend'],
                          host=db['db-host'],
+                         port=db['db-port'],
                          database=db['db-databaseName'],
                          user=db['db-user'],
                          password=db['db-password'])
@@ -712,14 +713,16 @@ class Database:
         self.db_server = db_params['db-server']
         self.database = db_params['db-databaseName']
         self.host = db_params['db-host']
+        self.port = db_params['db-port']
 
-    def connect(self, backend=None, host=None, database=None,
+    def connect(self, backend=None, host=None, port=None, database=None,
                 user=None, password=None, create=False):
         """Connects a database with the given parameters"""
         if backend is None:
             raise FpdbError('Database backend not defined')
         self.backend = backend
         self.host = host
+        self.port = port
         self.user = user
         self.password = password
         self.database = database
@@ -727,105 +730,48 @@ class Database:
         self.cursor     = None
         self.hand_inc   = 1
 
-        if backend == Database.MYSQL_INNODB:
-            import MySQLdb
-            if use_pool:
-                MySQLdb = pool.manage(MySQLdb, pool_size=5)
+        import psycopg2
+        import psycopg2.extensions
+        if use_pool:
+            psycopg2 = pool.manage(psycopg2, pool_size=5)
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+        # If DB connection is made over TCP, then the variables
+        # host, user and password are required
+        # For local domain-socket connections, only DB name is
+        # needed, and everything else is in fact undefined and/or
+        # flat out wrong
+        # sqlcoder: This database only connect failed in my windows setup??
+        # Modifed it to try the 4 parameter style if the first connect fails - does this work everywhere?
+        self.__connected = False
+        if self.host == "localhost" or self.host == "127.0.0.1":
             try:
-                self.connection = MySQLdb.connect(host=host
-                                                 ,user=user
-                                                 ,passwd=password
-                                                 ,db=database
-                                                 ,charset='utf8'
-                                                 ,use_unicode=True)
+                self.connection = psycopg2.connect(database = database)
                 self.__connected = True
-            #TODO: Add port option
-            except MySQLdb.Error, ex:
-                if ex.args[0] == 1045:
-                    raise FpdbMySQLAccessDenied(ex.args[0], ex.args[1])
-                elif ex.args[0] == 2002 or ex.args[0] == 2003: # 2002 is no unix socket, 2003 is no tcp socket
-                    raise FpdbMySQLNoDatabase(ex.args[0], ex.args[1])
-                else:
-                    print _("*** WARNING UNKNOWN MYSQL ERROR:"), ex
-            c = self.get_cursor()
-            c.execute("show variables like 'auto_increment_increment'")
-            self.hand_inc = int(c.fetchone()[1])
-        elif backend == Database.PGSQL:
-            import psycopg2
-            import psycopg2.extensions
-            if use_pool:
-                psycopg2 = pool.manage(psycopg2, pool_size=5)
-            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-            # If DB connection is made over TCP, then the variables
-            # host, user and password are required
-            # For local domain-socket connections, only DB name is
-            # needed, and everything else is in fact undefined and/or
-            # flat out wrong
-            # sqlcoder: This database only connect failed in my windows setup??
-            # Modifed it to try the 4 parameter style if the first connect fails - does this work everywhere?
-            self.__connected = False
-            if self.host == "localhost" or self.host == "127.0.0.1":
-                try:
-                    self.connection = psycopg2.connect(database = database)
-                    self.__connected = True
-                except:
-                    # direct connection failed so try user/pass/... version
-                    pass
-            if not self.is_connected():
-                try:
-                    #print(host, user, password, database)
-                    self.connection = psycopg2.connect(host = host,
-                                               user = user,
-                                               password = password,
-                                               database = database)
-                    self.__connected = True
-                except Exception, ex:
-                    if 'Connection refused' in ex.args[0] or ('database "' in ex.args[0] and '" does not exist' in ex.args[0]):
-                        # meaning eg. db not running
-                        raise FpdbPostgresqlNoDatabase(errmsg = ex.args[0])
-                    elif 'password authentication' in ex.args[0]:
-                        raise FpdbPostgresqlAccessDenied(errmsg = ex.args[0])
-                    elif 'role "' in ex.args[0] and '" does not exist' in ex.args[0]: #role "fpdb" does not exist
-                        raise FpdbPostgresqlAccessDenied(errmsg = ex.args[0])
-                    else:
-                        msg = ex.args[0]
-                    print msg
-                    raise FpdbError(msg)
-        elif backend == Database.SQLITE:
-            create = True
-            import sqlite3
-            if use_pool:
-                sqlite3 = pool.manage(sqlite3, pool_size=1)
-            #else:
-            #    log.warning("SQLite won't work well without 'sqlalchemy' installed.")
-
-            if database != ":memory:":
-                if not os.path.isdir(self.config.dir_database) and create:
-                    print _("Creating directory: '%s'") % (self.config.dir_database)
-                    log.info(_("Creating directory: '%s'") % (self.config.dir_database))
-                    os.mkdir(self.config.dir_database)
-                database = os.path.join(self.config.dir_database, database)
-            self.db_path = database
-            log.info(_("Connecting to SQLite: %s") % self.db_path)
-            if os.path.exists(database) or create:
-                self.connection = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES )
+            except:
+                # direct connection failed so try user/pass/... version
+                pass
+        if not self.is_connected():
+            try:
+                #print(host, user, password, database)
+                self.connection = psycopg2.connect(
+                                           host = host,
+                                           port = port,
+                                           user = user,
+                                           password = password,
+                                           database = database)
                 self.__connected = True
-                sqlite3.register_converter("bool", lambda x: bool(int(x)))
-                sqlite3.register_adapter(bool, lambda x: 1 if x else 0)
-                self.connection.create_function("floor", 1, math.floor)
-                self.connection.create_function("sqrt", 1, math.sqrt)
-                tmp = sqlitemath()
-                self.connection.create_function("mod", 2, tmp.mod)
-                if use_numpy:
-                    self.connection.create_aggregate("variance", 1, VARIANCE)
+            except Exception, ex:
+                if 'Connection refused' in ex.args[0] or ('database "' in ex.args[0] and '" does not exist' in ex.args[0]):
+                    # meaning eg. db not running
+                    raise FpdbPostgresqlNoDatabase(errmsg = ex.args[0])
+                elif 'password authentication' in ex.args[0]:
+                    raise FpdbPostgresqlAccessDenied(errmsg = ex.args[0])
+                elif 'role "' in ex.args[0] and '" does not exist' in ex.args[0]: #role "fpdb" does not exist
+                    raise FpdbPostgresqlAccessDenied(errmsg = ex.args[0])
                 else:
-                    log.warning(_("Some database functions will not work without NumPy support"))
-                self.cursor = self.connection.cursor()
-                self.cursor.execute('PRAGMA temp_store=2')  # use memory for temp tables/indexes
-                self.cursor.execute('PRAGMA journal_mode=WAL')  # use memory for temp tables/indexes
-                self.cursor.execute('PRAGMA synchronous=0') # don't wait for file writes to finish
-            else:
-                raise FpdbError("sqlite database "+database+" does not exist")
+                    msg = ex.args[0]
+                print msg
+                raise FpdbError(msg)
         else:
             raise FpdbError("unrecognised database backend:"+str(backend))
 

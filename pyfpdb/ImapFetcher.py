@@ -76,7 +76,8 @@ def run(config, db):
     response = server.select(config.folder)
     #print "response to selecting INBOX:",response
     if response[0] != "OK":
-        raise error  #TODO: show error message
+        print response[1]
+        raise IMAP4_SSL.error(response[1])  #TODO: show error message
 
     neededMessages = []
     response, searchData = server.search(None, "SUBJECT", "PokerStars Tournament History Request")

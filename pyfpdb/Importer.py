@@ -596,7 +596,7 @@ class Importer:
             foabs = obj.readFile(obj, filename)
             if foabs is None:
                 return None
-            re_Split = obj.getSplitRe(obj,foabs)
+            re_Split = obj.getSplitRe(foabs)
             summaryTexts = re.split(re_Split, foabs)
             
             # The summary files tend to have a header or footer

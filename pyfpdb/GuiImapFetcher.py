@@ -94,9 +94,15 @@ class GuiImapFetcher:
                 except IMAP4.error as error:
                     if str(error)=="[AUTHENTICATIONFAILED] Authentication failed.":
                         self.statusLabel.set_label(_("Login to mailserver failed: please check mailserver, username and password"))
+                    if str(error).startswith("['[NONEXISTENT] Unknown Mailbox:"):
+                        self.statusLabel.set_label(_("The specified mail folder does not exist"))
+                    else:
+                        self.statusLabel.set_label(str(error))
                 except gaierror as error:
                     if str(error)=="[Errno -2] Name or service not known":
                         self.statusLabel.set_label(_("Could not connect to mailserver: check mailserver and use SSL settings and internet connectivity"))
+                    else:
+                        self.statusLabel.set_label(str(error))
     #def importAllClicked
     
     def get_vbox(self):

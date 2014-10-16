@@ -89,5 +89,5 @@ setup(name = 'fpdb',
         ('/usr/share/python-fpdb/cards/colour/', glob.glob('gfx/cards/colour/*') ),
         ('/usr/share/python-fpdb/cards/simple/', glob.glob('gfx/cards/simple/*') ),
         ('/usr/share/python-fpdb/cards/white/', glob.glob('gfx/cards/white/*') ),
-        ], requires=['pyparsing']
+        ], requires=['pyparsing', 'winpaths']
 )

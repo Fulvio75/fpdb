@@ -65,7 +65,6 @@ class Sql:
         ################################
         # Select basic info
         ################################
-
         self.query['getSiteId'] = """SELECT id from Sites where name = %s"""
 
         self.query['getGames'] = """SELECT DISTINCT category from Gametypes"""
@@ -79,7 +78,7 @@ class Sql:
         ################################
         # Create Settings
         ################################
-        self.query['createSettingsTable'] =  """CREATE TABLE Settings (version SMALLINT NOT NULL)"""
+        self.query['createSettingsTable'] = """CREATE TABLE Settings (version SMALLINT NOT NULL)"""
     
         ################################
         # Create InsertLock
