@@ -180,12 +180,20 @@ def importSummaries(db, config, summaries, options=None):
         for j, summaryText in enumerate(summaryTexts, start=1):
             try:
                 if options == None or options.hhc == "PokerStars":
-                    PokerStarsSummary.PokerStarsSummary(db=db, config=config, siteName=u"PokerStars",
-                                                        summaryText=summaryText, builtFrom="IMAP")
+                    summary = PokerStarsSummary.PokerStarsSummary(
+                        db=db,
+                        config=config,
+                        siteName=u"PokerStars",
+                        summaryText=summaryText,
+                        builtFrom="IMAP")
+                    summary.insertOrUpdate(True)
                 elif options.hhc == "Full Tilt Poker":
                     FullTiltPokerSummary.FullTiltPokerSummary(db=db, config=config, siteName=u"Fulltilt",
                                                               summaryText=summaryText, builtFrom="IMAP")
             except FpdbParseError, e:
+                errors += 1
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
                 errors += 1
             print _("Finished importing %s/%s tournament summaries") % (j, len(summaryTexts))
 
