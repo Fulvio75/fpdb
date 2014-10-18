@@ -159,7 +159,7 @@ class GuiTourneyGraphViewer:
 
         #Get graph data from DB
         starttime = time()
-        green = self.getData(playerids, sitenos)
+        (green, blue, red, orange) = self.getData(playerids, sitenos)
         print _("Graph generated in: %s") %(time() - starttime)
 
 
@@ -201,7 +201,13 @@ class GuiTourneyGraphViewer:
             self.ax.set_title(_("Tournament Results")+" (USD)")
 
             #Draw plot
-            self.ax.plot(green, color='green', label=_('Tournaments') + ': %d\n' % len(green) + _('Profit') + ': $%.2f' % green[-1])
+            self.ax.plot(
+                green,
+                color='green',
+                label=_('Tournaments') + ': %d\n' % len(green) + _('Profit') + ': $%.2f' % green[-1])
+            self.ax.plot(blue, color='blue', label="Vincite" + ': $%.2f' % blue[-1])
+            self.ax.plot(red, color='red', label="BuyIn" + ': $%.2f' % red[-1])
+            self.ax.plot(orange, color='orange', label="Rake" + ': $%.2f' % orange[-1])
 
             legend = self.ax.legend(loc='upper left', fancybox=True, shadow=True, prop=FontProperties(size='smaller'))
             legend.draggable(True)
@@ -229,13 +235,15 @@ class GuiTourneyGraphViewer:
         if len(winnings) == 0:
             return None
 
-        green = map(lambda x:float(x[1]), winnings)
-        #blue  = map(lambda x: float(x[1]) if x[2] == True  else 0.0, winnings)
-        #red   = map(lambda x: float(x[1]) if x[2] == False else 0.0, winnings)
+        green = map(lambda x: float(x[1]), winnings)
+        blue = map(lambda x: float(x[2]), winnings)
+        red = map(lambda x: float(x[3]), winnings)
+        orange = map(lambda x: float(x[4]), winnings)
         greenline = cumsum(green)
-        #blueline  = cumsum(blue)
-        #redline   = cumsum(red)
-        return (greenline/100)
+        blueline = cumsum(blue)
+        redline = cumsum(red)
+        orangeline = cumsum(orange)
+        return (greenline/100, blueline/1000, redline/1000, orangeline/1000)
 
     def exportGraph (self, widget, data):
         if self.fig is None:

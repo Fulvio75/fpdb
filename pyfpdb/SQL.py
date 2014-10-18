@@ -2548,14 +2548,19 @@ class Sql:
         #  being graphed - needs proper fix mantis #180 +#182
         ####################################
         self.query['tourneyGraph'] = """
-                SELECT tp.tourneyId, (coalesce(tp.winnings,0) - coalesce(tt.buyIn,0) - coalesce(tt.fee,0)) as profit, tp.koCount, tp.rebuyCount, tp.addOnCount, tt.buyIn, tt.fee, t.siteTourneyNo
+                SELECT
+                    tp.tourneyId,
+                    coalesce(tp.winnings,0) - coalesce(tt.buyIn,0) - coalesce(tt.fee,0) as profit,
+                    coalesce(tp.winnings,0) as winnings,
+                    coalesce(tt.buyIn,0) as buyin,
+                    coalesce(tt.fee,0) as rake
                 FROM TourneysPlayers tp
                 JOIN Players pl      ON  (pl.id = tp.playerId)
                 JOIN Tourneys t         ON  (t.id  = tp.tourneyId)
                 JOIN TourneyTypes tt    ON  (tt.id = t.tourneyTypeId)
                 WHERE pl.id = ANY(%(players)s)
                 AND   pl.siteId = ANY(%(sites)s)
-                AND   (t.startTime BETWEEN %(startdate)s AND %(enddate)s)
+                AND   t.startTime BETWEEN %(startdate)s AND %(enddate)s
                 AND   tt.currency = 'EUR'
                 GROUP BY t.startTime, tp.tourneyId, tp.winningsCurrency,
                          tp.winnings, tp.koCount,
