@@ -696,7 +696,6 @@ class Hand(object):
                 self.lastBet[street] = amount
             self.posted = self.posted + [[player,blindtype]]
 
-
     def addCall(self, street, player=None, amount=None):
         if amount is not None:
             amount = amount.replace(u',', u'') #some sites have commas
@@ -795,8 +794,6 @@ class Hand(object):
         self.lastBet[street] = Rt # TODO check this is correct
         self.pot.addMoney(player, C+Rb)
 
-
-
     def addBet(self, street, player, amount):
         log.debug(_("%s %s bets %s") %(street, player, amount))
         amount = amount.replace(u',', u'') #some sites have commas
@@ -810,7 +807,6 @@ class Hand(object):
         self.lastBet[street] = amount
         self.pot.addMoney(player, amount)
 
-
     def addStandsPat(self, street, player, cards=None):
         self.checkPlayerExists(player, 'addStandsPat')
         act = (player, 'stands pat')
@@ -819,7 +815,6 @@ class Hand(object):
             cards = cards.split(' ')
             self.addHoleCards(street, player, open=[], closed=cards)
 
-
     def addFold(self, street, player):
         log.debug(_("%s %s folds") % (street, player))
         self.checkPlayerExists(player, 'addFold')
@@ -827,18 +822,15 @@ class Hand(object):
         self.pot.addFold(player)
         self.actions[street].append((player, 'folds'))
 
-
     def addCheck(self, street, player):
         #print "DEBUG: %s %s checked" % (street, player)
         logging.debug(_("%s %s checks") % (street, player))
         self.checkPlayerExists(player, 'addCheck')
         self.actions[street].append((player, 'checks'))
 
-
     def discardDrawHoleCards(self, cards, player, street):
         log.debug("discardDrawHoleCards '%s' '%s' '%s'" % (cards, player, street))
         self.discards[street][player] = set([cards])
-
 
     def addDiscard(self, street, player, num, cards=None):
         self.checkPlayerExists(player, 'addDiscard')
@@ -849,7 +841,6 @@ class Hand(object):
             act = (player, 'discards', Decimal(num))
         self.actions[street].append(act)
 
-
     def addCollectPot(self,player, pot):
         log.debug("%s collected %s" % (player, pot))
         self.checkPlayerExists(player, 'addCollectPot')
@@ -858,7 +849,6 @@ class Hand(object):
             self.collectees[player] = Decimal(pot)
         else:
             self.collectees[player] += Decimal(pot)
-
 
     def addShownCards(self, cards, player, holeandboard=None, shown=True, mucked=False, string=None):
         """ For when a player shows cards for any reason (for showdown or out of choice).
@@ -954,7 +944,6 @@ class Hand(object):
         log.debug("gametype: %s" %(self.gametype))
         retstring = "%s %s" %(gs[self.gametype['category']], ls[self.gametype['limitType']])
         return retstring
-
 
     def writeHand(self, fh=sys.__stdout__):
         print >>fh, "Override me"
@@ -1074,11 +1063,11 @@ class Hand(object):
             table_string = table_string + " Seat #%s is the button" % self.buttonpos
         return table_string
 
-
     def writeHand(self, fh=sys.__stdout__):
         # PokerStars format.
         print >>fh, self.writeGameLine()
         print >>fh, self.writeTableLine()
+
 
 
 class HoldemOmahaHand(Hand):
@@ -1470,7 +1459,15 @@ class DrawHand(Hand):
                 self.maxseats = hhc.guessMaxSeats(self)
             self.sittingOut()
             hhc.readOther(self)
-            
+
+            # Reintrodotto temporaneamente per debugging
+            try:
+                hhc.readTourneyResults(self)
+            except AttributeError as attrError:
+                print "AttributeError: {0}".format(attrError.message)
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+
         elif builtFrom == "DB":
             # Creator expected to call hhc.select(hid) to fill out object
             print "DEBUG: DrawHand initialised for select()"
@@ -1604,8 +1601,6 @@ class DrawHand(Hand):
         print >>fh, "%s | Rake %s%.2f" % (self.pot, self.sym, self.rake)
         print >>fh, "\n\n"
 
-
-
 class StudHand(Hand):
     def __init__(self, config, hhc, sitename, gametype, handText, builtFrom = "HHC", handid=None):
         self.config = config
@@ -1660,6 +1655,14 @@ class StudHand(Hand):
                 self.maxseats = hhc.guessMaxSeats(self)
             self.sittingOut()
             hhc.readOther(self)
+
+            # Reintrodotto temporaneamente per debugging
+            try:
+                hhc.readTourneyResults(self)
+            except AttributeError as attrError:
+                print "AttributeError: {0}".format(attrError.message)
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
             
         elif builtFrom == "DB":
             # Creator expected to call hhc.select(hid) to fill out object
