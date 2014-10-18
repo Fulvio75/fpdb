@@ -2114,11 +2114,13 @@ class Sql:
                                     WHEN tp.rank > 0 THEN 0 
                                     ELSE 1 
                                 END) AS "unknownRank",
-                            (CAST(SUM(
-                                    CASE 
-                                        WHEN winnings > 0 THEN 1 
-                                        ELSE 0 
-                                    END) AS BIGINT)/CAST(COUNT(1) AS BIGINT))*100 AS itm,
+                            /* Numero Ottenimenti Denaro / NumeroGiocate */
+                            ROUND(100.0 *
+                                SUM(CASE
+                                    WHEN tp.winnings > 0 THEN 1
+                                    ELSE 0
+                                END)  /
+                                CAST(COUNT(1) AS BIGINT), 2) AS "itm",
                             SUM(CASE 
                                     WHEN tp.rank = 1 THEN 1 
                                     ELSE 0 
