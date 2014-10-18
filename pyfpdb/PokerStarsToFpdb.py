@@ -293,11 +293,11 @@ class PokerStars(HandHistoryConverter):
                     #print "   tz = ", tz, " datetime =", datetimestr
                 hand.startTime = datetime.datetime.strptime(datetimestr, "%Y/%m/%d %H:%M:%S") # also timezone at end, e.g. " ET"
                 hand.startTime = HandHistoryConverter.changeTimezone(hand.startTime, "ET", "UTC")
-            if key == 'HID':
+            elif key == 'HID':
                 hand.handid = info[key]
-            if key == 'TOURNO':
+            elif key == 'TOURNO':
                 hand.tourNo = info[key]
-            if key == 'BUYIN':
+            elif key == 'BUYIN':
                 if hand.tourNo!=None:
                     #print "DEBUG: info['BUYIN']: %s" % info['BUYIN']
                     #print "DEBUG: info['BIAMT']: %s" % info['BIAMT']
@@ -352,19 +352,19 @@ class PokerStars(HandHistoryConverter):
                         hand.isHomeGame = True
                     else:
                         hand.isHomeGame = False
-            if key == 'LEVEL':
+            elif key == 'LEVEL':
                 hand.level = info[key]       
-            if key == 'SHOOTOUT' and info[key] != None:
+            elif key == 'SHOOTOUT' and info[key] != None:
                 hand.isShootout = True
-            if key == 'TABLE':
+            elif key == 'TABLE':
                 tablesplit = re.split(" ", info[key])
                 if hand.tourNo != None and len(tablesplit)>1:
                     hand.tablename = tablesplit[1]
                 else:
                     hand.tablename = info[key]
-            if key == 'BUTTON':
+            elif key == 'BUTTON':
                 hand.buttonpos = info[key]
-            if key == 'MAX' and info[key] != None:
+            elif key == 'MAX' and info[key] != None:
                 hand.maxseats = int(info[key])
                 
         if 'Zoom' in self.in_path:
