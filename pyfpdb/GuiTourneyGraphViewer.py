@@ -60,18 +60,20 @@ class GuiTourneyGraphViewer:
         self.db = Database.Database(self.conf, sql=self.sql)
 
 
-        filters_display = { "Heroes"    : True,
+        filters_display = {
+                            "Heroes"    : True,
                             "Sites"     : True,
-                            "Games"     : False,
+                            "Games"     : True,
+                            "Currencies": True,
                             "Limits"    : False,
                             "LimitSep"  : False,
-                            "LimitType" : False,
-                            "Type"      : False,
+                            "LimitType" : True,
+                            "Type"      : True,
                             "UseType"   : 'tour',
                             "Seats"     : False,
                             "SeatSep"   : False,
                             "Dates"     : True,
-                            "Groups"    : False,
+                            "Groups"    : True,
                             "Button1"   : True,
                             "Button2"   : True
                           }
@@ -133,6 +135,9 @@ class GuiTourneyGraphViewer:
         sites   = self.filters.getSites()
         heroes  = self.filters.getHeroes()
         siteids = self.filters.getSiteIds()
+        limits  = self.filters.getLimits()
+        games   = self.filters.getGames()
+        currencies = self.filters.getCurrencies()
 
         # Which sites are selected?
         for site in sites:
@@ -159,7 +164,7 @@ class GuiTourneyGraphViewer:
 
         #Get graph data from DB
         starttime = time()
-        (green, blue, red, orange) = self.getData(playerids, sitenos)
+        (green, blue, red, orange) = self.getData(playerids, sitenos, games, currencies)
         print _("Graph generated in: %s") %(time() - starttime)
 
 
@@ -228,14 +233,16 @@ class GuiTourneyGraphViewer:
 
     #end of def showClicked
 
-    def getData(self, names, sites):
+    def getData(self, names, sites, games, currencies):
         #print "DEBUG: getData"
         start_date, end_date = self.filters.getDates()
         namedSqlParameters = {
             'players': names, 
             'sites': sites, 
             'startdate': start_date, 
-            'enddate': end_date }
+            'enddate': end_date,
+            'games': games
+        }
         self.db.cursor.execute(self.sql.query['tourneyGraph'], namedSqlParameters)
         #returns (HandId,Winnings,Costs,Profit)
         winnings = self.db.cursor.fetchall()
