@@ -205,9 +205,18 @@ class GuiTourneyGraphViewer:
                 green,
                 color='green',
                 label=_('Tournaments') + ': %d\n' % len(green) + _('Profit') + ': $%.2f' % green[-1])
-            self.ax.plot(blue, color='blue', label="Vincite" + ': $%.2f' % blue[-1])
-            self.ax.plot(red, color='red', label="BuyIn" + ': $%.2f' % red[-1])
-            self.ax.plot(orange, color='orange', label="Rake" + ': $%.2f' % orange[-1])
+            self.ax.plot(
+                blue,
+                color='blue',
+                label="Vincite" + ': $%.2f' % (10*blue[-1]))
+            self.ax.plot(
+                red,
+                color='red',
+                label="BuyIn" + ': $%.2f' % (10*red[-1]))
+            self.ax.plot(
+                orange,
+                color='orange',
+                label="Rake" + ': $%.2f' % (10*orange[-1]))
 
             legend = self.ax.legend(loc='upper left', fancybox=True, shadow=True, prop=FontProperties(size='smaller'))
             legend.draggable(True)
