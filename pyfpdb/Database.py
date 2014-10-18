@@ -2425,6 +2425,38 @@ class Database:
             q = q.replace('%s', self.sql.query['placeholder'])
             c = self.get_cursor(True)
             self.executemany(c, q, self.hpbulk) #c.executemany(q, self.hpbulk)
+
+    #Supporto agli aggiornamenti dei risultati di torneo dai dati
+    def storeTourResults(self, tourneyResults, currency, tourneyId, startTime):
+        for playerresult in tourneyResults:
+            sqlParametersTourneysPlayers = {
+                'rank': playerresult[1],
+                'winnings': playerresult[2],
+                'winningscurrency': currency,
+                'playerName': playerresult[0],
+                'tourneyId': tourneyId
+            }
+            sqlParametersTourneys = {
+                'startTime': startTime,
+                'tourneyId': tourneyId
+            }
+            try:
+                self.cursor.execute(
+                    self.sql.query['updateTourneysPlayersResults'],
+                    sqlParametersTourneysPlayers)
+                self.cursor.execute(
+                    self.sql.query['updateTourneysResults'],
+                    sqlParametersTourneys)
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+
+            print "Giocatore {0} in posizione {1} vince {2} valuta {3} in torneo {4} iniziato alle {5}".format(
+                playerresult[0],
+                playerresult[1],
+                playerresult[2],
+                currency,
+                tourneyId,
+                startTime)
             
     def storeHandsPots(self, tdata, doinsert):
         self.htbulk += tdata

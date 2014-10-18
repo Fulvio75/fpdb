@@ -2555,7 +2555,7 @@ class Sql:
                 JOIN TourneyTypes tt    ON  (tt.id = t.tourneyTypeId)
                 WHERE pl.id = ANY(%(players)s)
                 AND   pl.siteId = ANY(%(sites)s)
-                AND   t.startTime BETWEEN %(startdate)s AND %(enddate)s
+                AND   (t.startTime BETWEEN %(startdate)s AND %(enddate)s)
                 AND   tt.currency = 'EUR'
                 GROUP BY t.startTime, tp.tourneyId, tp.winningsCurrency,
                          tp.winnings, tp.koCount,
@@ -4800,6 +4800,29 @@ class Sql:
                                                      addOnCount = %s,
                                                      koCount = %s
                                                  WHERE id=%s
+        """
+
+        # Aggiornamento tornei di cui non si ha la storia
+        self.query['updateTourneysPlayersResults'] = """UPDATE tourneysplayers TP
+                                                SET
+                                                    rank = %(rank)s,
+                                                    winnings = %(winnings)s,
+                                                    winningscurrency = %(winningscurrency)s
+                                                WHERE
+                                                    playerId = (SELECT p.id
+                                                                FROM players p
+                                                                WHERE name = %(playerName)s)
+                                                    AND tourneyId = %(tourneyId)s
+                                                    AND rank IS NULL
+                                                    AND winnings IS NULL
+                                                    AND winningscurrency  IS NULL
+        """
+
+        self.query['updateTourneysResults'] = """UPDATE tourneys
+                                                SET startTime = %(startTime)s
+                                                WHERE
+                                                    id = %(tourneyId)s
+                                                    AND startTime IS NULL
         """
 
         self.query['insertTourneysPlayer'] = """insert into TourneysPlayers(
