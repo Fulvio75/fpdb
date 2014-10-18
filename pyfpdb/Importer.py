@@ -261,6 +261,8 @@ class Importer:
         #else:
         #    log.info(_("runPostImport"))
         self.runPostImport()
+
+        #  Commentare la seguente riga per acquisizioni massive!!!!
         self.database.analyzeDB()
         endtime = time()
         return (totstored, totdups, totpartial, toterrors, endtime-starttime)
@@ -484,6 +486,9 @@ class Importer:
                         ihands.append(hand)
                         to_hud.append(hand.dbid_hands)
                     except FpdbHandDuplicate:
+                        # Aggiornamento delle informazioni di torneo.
+                        # Disabilitare o rendere configurabile
+                        hand.updateTourneyResult(self.database, phands[0].startTime)
                         duplicates += 1
                         if (doinsert and ihands): backtrack = True
                     except:
