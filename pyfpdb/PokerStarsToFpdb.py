@@ -546,17 +546,27 @@ class PokerStars(HandHistoryConverter):
             tourney results from hh's. As the current Stars client supports writing tourney results files
             directly to the client machine i'm removing the ability to parse tourney results from hh files
             until we merge/resolve IdentifySite into the parsing despatch sequence"""
+        
         for winningrankone in self.re_WinningRankOne.finditer(hand.handText):
-            hand.addPlayerRank (winningrankone.group('PNAME'),int(100*Decimal(winningrankone.group('AMT'))),1)
+            playername = winningrankone.group('PNAME')
+            wonmoney = int(100*Decimal(winningrankone.group('AMT')))
+            playerrank = 1
+            hand.addPlayerRank(playername, wonmoney, playerrank)
 
         for winningrankothers in self.re_WinningRankOther.finditer(hand.handText):
-            hand.addPlayerRank (winningrankothers.group('PNAME'),int(100*Decimal(winningrankothers.group('AMT'))),winningrankothers.group('RANK'))
+            playername = winningrankothers.group('PNAME')
+            wonmoney = int(100*Decimal(winningrankothers.group('AMT')))
+            playerrank = winningrankothers.group('RANK')
+            hand.addPlayerRank(playername, wonmoney, playerrank)
 
         for rankothers in self.re_RankOther.finditer(hand.handText):
-            hand.addPlayerRank (rankothers.group('PNAME'),0,rankothers.group('RANK'))
+            playername = rankothers.group('PNAME')
+            wonmoney = 0
+            playerrank = rankothers.group('RANK')
+            hand.addPlayerRank(playername, wonmoney, playerrank)
 
-    def readCollectPot(self,hand):
-        i=0
+    def readCollectPot(self, hand):
+        i = 0
         if hand.runItTimes==0:
             for m in self.re_CollectPot.finditer(hand.handText):
                 hand.addCollectPot(player=m.group('PNAME'),pot=m.group('POT'))

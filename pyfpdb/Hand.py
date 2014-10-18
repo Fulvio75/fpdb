@@ -127,6 +127,10 @@ class Hand(object):
         self.added = None
         self.addedCurrency = None
         self.entryId = 1
+        # Aggiunta per supportare i risultati di torneo
+        # Ogni elemento della lista è una tripla con nome giocatore, posizione, ricavo in centesimi
+        # Es: [('SoloMatti', 9, 0), ......, ('alex', 3, 69), ('Thukam', 1, 200), (betrich82, 2, 100)]
+        self.tourneyResults = []
 
         self.seating = []
         self.players = []
@@ -548,6 +552,9 @@ class Hand(object):
         #hhc.readShowdownActions(self)
         #hc.readShownCards(self)
 
+    # Aggiornamento delle informazioni di torneo, se presenti
+    def updateTourneyResult(self, db, tourneyStartTime):
+        db.storeTourResults(self.tourneyResults, self.buyinCurrency, self.tourneyId, tourneyStartTime)
 
     def addPlayer(self, seat, name, chips, position=None, sitout=False):
         """ Adds a player to the hand, and initialises data structures indexed by player.
@@ -1135,6 +1142,15 @@ class HoldemOmahaHand(Hand):
                 self.maxseats = hhc.guessMaxSeats(self)
             self.sittingOut()
             hhc.readOther(self)
+
+            # Reintrodotto temporaneamente per debugging
+            try:
+                hhc.readTourneyResults(self)
+            except AttributeError as attrError:
+                print "AttributeError: {0}".format(attrError.message)
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+
             #print "\nHand:\n"+str(self)
         elif builtFrom == "DB":
             # Creator expected to call hhc.select(hid) to fill out object
@@ -1196,7 +1212,6 @@ class HoldemOmahaHand(Hand):
             return " ".join(hcs)
         else:
             return hcs
-
 
     def writeHTMLHand(self):
         from nevow import tags as T
@@ -1291,7 +1306,6 @@ class HoldemOmahaHand(Hand):
                    tidy_mark=False)
 
         return str(tidy.parseString(flat.flatten(s), **options))
-
 
     def writeHand(self, fh=sys.__stdout__):
         # PokerStars format.
@@ -1395,6 +1409,12 @@ class HoldemOmahaHand(Hand):
                     print >>fh, ("Seat %d: %s mucked" % (seatnum, name))
 
         print >>fh, "\n\n"
+
+    # Aggiunta per supportare i risultati di torneo
+    def addPlayerRank(self, playername, wonmoney, playerrank):
+        # Tupla con il risultato
+        playerresult = (playername, playerrank, wonmoney)
+        self.tourneyResults.append(playerresult)
 
 class DrawHand(Hand):
     def __init__(self, config, hhc, sitename, gametype, handText, builtFrom = "HHC", handid=None):
