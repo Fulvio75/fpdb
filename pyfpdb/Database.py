@@ -2428,6 +2428,17 @@ class Database:
 
     #Supporto agli aggiornamenti dei risultati di torneo dai dati
     def storeTourResults(self, tourneyResults, currency, tourneyId, startTime):
+        sqlParametersTourneys = {
+            'startTime': startTime,
+            'tourneyId': tourneyId
+        }
+        try:
+            self.cursor.execute(
+                self.sql.query['updateTourneysResults'],
+                sqlParametersTourneys)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+
         for playerresult in tourneyResults:
             sqlParametersTourneysPlayers = {
                 'rank': playerresult[1],
@@ -2436,17 +2447,10 @@ class Database:
                 'playerName': playerresult[0],
                 'tourneyId': tourneyId
             }
-            sqlParametersTourneys = {
-                'startTime': startTime,
-                'tourneyId': tourneyId
-            }
             try:
                 self.cursor.execute(
                     self.sql.query['updateTourneysPlayersResults'],
                     sqlParametersTourneysPlayers)
-                self.cursor.execute(
-                    self.sql.query['updateTourneysResults'],
-                    sqlParametersTourneys)
             except:
                 print "Unexpected error:", sys.exc_info()[0]
 
